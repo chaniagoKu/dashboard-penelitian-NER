@@ -1,0 +1,11 @@
+.venv/
+
+results_indobert/
+
+login_hf.py
+
+upload_model.py
+
+__pycache__/
+
+*.pyc
