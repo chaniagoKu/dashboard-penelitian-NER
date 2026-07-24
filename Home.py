@@ -39,6 +39,15 @@ df = load_data()
 
 st.title("🧴 Penerapan Model BERT untuk Named Entity Recognition dan Analisis Topik dengan LDA pada Listing Produk Skincare")
 
+st.markdown(
+    """
+    <p style="font-size:18px; color:gray; margin-top:-10px;">
+        Dibuat Oleh: <b>Irma Octavia Chaniago</b>
+    </p>
+    """,
+    unsafe_allow_html=True
+)
+
 st.image(
     "assets/banner.jpeg",
     use_container_width=True
