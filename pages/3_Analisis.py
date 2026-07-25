@@ -149,28 +149,42 @@ if st.button("🔍 Analisis"):
 
         rows = []
 
-        for h in hasil:
+        i = 0
 
-            entitas = clean_entity(h["word"])
+        while i < len(hasil):
 
-            label = h["entity_group"]
+            current = hasil[i]
 
-            if entitas in [".", ",", ";", ":", "!", "?"]:
-                continue
+            entity = current["word"].replace("##", "")
+            label = current["entity_group"]
+
+            start = current["start"]
+            end = current["end"]
+
+            j = i + 1
+
+            # Gabungkan subword yang berurutan
+            while (
+                j < len(hasil)
+                and hasil[j]["entity_group"] == label
+                and hasil[j]["word"].startswith("##")
+                and hasil[j]["start"] == end
+            ):
+
+                entity += hasil[j]["word"].replace("##", "")
+                end = hasil[j]["end"]
+                j += 1
 
             rows.append({
-
-                "Entitas": entitas,
-
+                "Entitas": entity,
                 "Label": label
-
             })
+
+            i = j
 
         pred_df = pd.DataFrame(rows)
 
-        st.subheader(
-            "🏷 Hasil Named Entity Recognition"
-        )
+        st.subheader("🏷 Hasil Named Entity Recognition")
 
         st.dataframe(
             pred_df,
