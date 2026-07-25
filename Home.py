@@ -68,20 +68,25 @@ st.subheader("📊 Informasi Dataset")
 
 c1, c2, c3 = st.columns(3)
 
-c1.metric(
-    "Jumlah Data",
-    f"{len(df):,}"
-)
+with c1:
+    st.metric(
+        "Jumlah Data",
+        f"{len(df):,}"
+    )
 
-c2.metric(
-    "Kategori",
-    "Perawatan dan Kecantikan"
-)
+with c2:
+    st.markdown("**Kategori**")
+    st.markdown(
+        "<h2 style='margin-top:0;'>Perawatan dan Kecantikan</h2>",
+        unsafe_allow_html=True
+    )
 
-c3.metric(
-    "Sumber Data",
-    "Marketplace Shopee"
-)
+with c3:
+    st.markdown("**Sumber Data**")
+    st.markdown(
+        "<h2 style='margin-top:0;'>Marketplace Shopee</h2>",
+        unsafe_allow_html=True
+    )
 
 # =====================================
 # LATAR BELAKANG
