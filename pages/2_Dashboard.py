@@ -22,13 +22,12 @@ def load_data():
     df = pd.read_csv(DATA_PATH)
 
     # antisipasi missing value
+    # hanya isi NA untuk entitas
     cols = [
         "merek",
         "jenis_produk",
         "kandungan",
-        "manfaat",
-        "topik",
-        "topik_label"
+        "manfaat"
     ]
 
     for col in cols:
@@ -74,7 +73,17 @@ def tampil_wordcloud(series):
         "yang",
         "di",
         "dengan",
-        "atau"
+        "atau",
+        "&",
+        "utk",
+        "untk",
+        "dgn",
+        "dngan",
+        "dngn",
+        "pkai",
+        "pakai",
+        "guna",
+
     }
 
     text = " ".join(
