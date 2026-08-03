@@ -184,8 +184,10 @@ if st.button("🔍 Analisis"):
 
         pred_df = pd.DataFrame(rows)
         # ==========================================
-        # FILTER KATA YANG BUKAN ENTITAS
+        # POST-PROCESSING HASIL NER
         # ==========================================
+
+        import re
 
         STOP_ENTITY = {
             "dan",
@@ -209,9 +211,26 @@ if st.button("🔍 Analisis"):
             "&"
         }
 
+        def clean_entity_result(text):
+
+            text = str(text).strip()
+
+            # hapus kata hubung di awal entitas
+            text = re.sub(
+                r'^(dan|atau|dengan|dgn|dngan|utk|untk|buat|untuk|serta|hingga|sampai)\s+',
+                '',
+                text,
+                flags=re.IGNORECASE
+            )
+
+            return text.strip()
+
+        # bersihkan entitas
+        pred_df["Entitas"] = pred_df["Entitas"].apply(clean_entity_result)
+
+        # hapus jika setelah dibersihkan hanya kata hubung
         pred_df = pred_df[
             ~pred_df["Entitas"]
-                .astype(str)
                 .str.lower()
                 .isin(STOP_ENTITY)
         ]
