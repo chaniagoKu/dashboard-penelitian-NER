@@ -15,7 +15,7 @@ st.set_page_config(
 # ==========================================================
 # LOAD DATA
 # ==========================================================
-DATA_PATH = "data/dataset_final.csv"
+DATA_PATH = "data/dataset_final_indobert.csv"
 
 @st.cache_data
 def load_data():
