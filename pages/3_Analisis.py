@@ -183,6 +183,40 @@ if st.button("🔍 Analisis"):
             i = j
 
         pred_df = pd.DataFrame(rows)
+        # ==========================================
+        # FILTER KATA YANG BUKAN ENTITAS
+        # ==========================================
+
+        STOP_ENTITY = {
+            "dan",
+            "atau",
+            "dengan",
+            "dgn",
+            "dngan",
+            "utk",
+            "untk",
+            "buat",
+            "untuk",
+            "serta",
+            "hingga",
+            "sampai",
+            "di",
+            "ke",
+            "dari",
+            "pada",
+            "yang",
+            "yg",
+            "&"
+        }
+
+        pred_df = pred_df[
+            ~pred_df["Entitas"]
+                .astype(str)
+                .str.lower()
+                .isin(STOP_ENTITY)
+        ]
+
+        pred_df = pred_df.reset_index(drop=True)
 
         st.subheader("🏷 Hasil Named Entity Recognition")
 
