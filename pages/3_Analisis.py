@@ -416,94 +416,121 @@ Probabilitas :
         )
 
         # ==================================================
-        # PRODUK BERDASARKAN TOPIK
+        # PRODUK SERUPA BERDASARKAN TOPIK
         # ==================================================
 
-        st.subheader("🛍 Produk Relevan Berdasarkan Topik")
+        st.subheader("🛍 Produk Serupa Berdasarkan Topik")
 
+        # Ambil semua produk pada topik dominan
         produk_topik = df_produk[
             df_produk["topik"] == topic_id
         ].copy()
 
-        jenis = ambil("JENIS_PRODUK")
-        kandungan = ambil("KANDUNGAN")
-        manfaat = ambil("MANFAAT")
+        if len(produk_topik) == 0:
 
-        if jenis != "-":
-            produk_topik = produk_topik[
-                produk_topik["jenis_produk"]
-                .str.contains(jenis, case=False, na=False)
-            ]
+            st.warning("Tidak ada produk pada topik ini.")
 
-        if kandungan != "-":
-            produk_topik = produk_topik[
-                produk_topik["kandungan"]
-                .str.contains(kandungan, case=False, na=False)
-            ]
+        else:
 
-        if manfaat != "-":
-            produk_topik = produk_topik[
-                produk_topik["manfaat"]
-                .str.contains(manfaat, case=False, na=False)
-            ]
+            # TF-IDF hanya untuk produk dalam topik
+            vectorizer_topik = TfidfVectorizer()
 
-        produk_topik = produk_topik.drop_duplicates(subset="text")
+            tfidf_topik = vectorizer_topik.fit_transform(
+                produk_topik["text"].fillna("")
+            )
 
-        if len(produk_topik) > 0:
+            query_vec = vectorizer_topik.transform([query])
+
+            similarity = cosine_similarity(
+                query_vec,
+                tfidf_topik
+            ).flatten()
+
+            produk_topik["Similarity (%)"] = (
+                similarity * 100
+            ).round(2)
+
+            produk_topik = produk_topik.sort_values(
+                by="Similarity (%)",
+                ascending=False
+            )
 
             st.dataframe(
+
                 produk_topik[
                     [
                         "text",
                         "merek",
-                        "jenis_produk"
+                        "jenis_produk",
+                        "kandungan",
+                        "manfaat",
+                        "Similarity (%)"
                     ]
                 ].head(10),
+
                 use_container_width=True,
                 hide_index=True
             )
 
-        else:
+            # ==================================================
+            # KOMPONEN LISTING YANG DIREKOMENDASIKAN
+            # ==================================================
 
-            st.info("Tidak ada produk pada topik ini.")
+            st.subheader("💡 Komponen Listing yang Direkomendasikan")
 
-        # ==================================================
-        # PRODUK PALING MIRIP
-        # ==================================================
+            jenis = ambil("JENIS_PRODUK")
+            kandungan = ambil("KANDUNGAN")
+            manfaat = ambil("MANFAAT")
+            merek = ambil("MEREK")
 
-        st.subheader("🔍 Produk yang Mirip dengan Query")
+            komponen = []
 
-        query_vec = vectorizer.transform([query])
+            if merek != "-":
+                komponen.append(("🏷 Merek", merek))
 
-        similarity = cosine_similarity(
-            query_vec,
-            tfidf_matrix
-        ).flatten()
+            if jenis != "-":
+                komponen.append(("🧴 Jenis Produk", jenis))
 
-        df_similarity = df_produk.copy()
+            if kandungan != "-":
+                komponen.append(("🧪 Kandungan", kandungan))
 
-        df_similarity["similarity"] = similarity
+            if manfaat != "-":
+                komponen.append(("✨ Manfaat", manfaat))
 
-        hasil = (
-            df_similarity
-            .sort_values(
-                by="similarity",
-                ascending=False
+            for judul, isi in komponen:
+                st.markdown(f"**{judul}**")
+                st.success(isi)
+
+            st.subheader("📝 Contoh Penyusunan Listing")
+
+            listing = []
+
+            if merek != "-":
+                listing.append(merek)
+
+            if jenis != "-":
+                listing.append(jenis)
+
+            if kandungan != "-":
+                listing.append(kandungan)
+
+            if manfaat != "-":
+                listing.append(manfaat)
+
+            hasil_listing = " ".join(listing)
+
+            st.info(hasil_listing)
+
+            st.caption(
+            """
+            Contoh penyusunan listing disusun berdasarkan:
+
+            • hasil ekstraksi entitas menggunakan model IndoBERT;
+
+            • topik dominan hasil pemodelan LDA;
+
+            • karakteristik produk-produk serupa pada topik tersebut.
+
+            Dashboard ini tidak menentukan listing terbaik, tetapi memberikan dasar informasi yang dapat digunakan pengguna dalam menyusun nama produk secara lebih konsisten.
+            """
             )
-        )
-
-        st.dataframe(
-
-            hasil[
-                [
-                    "text",
-                    "merek",
-                    "jenis_produk",
-                    "similarity"
-                ]
-            ]
-            .head(10),
-
-            use_container_width=True,
-            hide_index=True
-        )
