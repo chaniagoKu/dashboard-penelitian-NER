@@ -7,3 +7,5 @@ torch
 gensim
 scipy
 numpy
+scikit-learn
+sentencepiece
