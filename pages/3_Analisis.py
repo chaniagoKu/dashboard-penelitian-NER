@@ -2,6 +2,9 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
 from wordcloud import WordCloud
 
 from transformers import (
@@ -77,6 +80,34 @@ ner_model = load_ner()
 
 lda_model, dictionary = load_lda()
 
+# ==================================================
+# LOAD DATASET
+# ==================================================
+
+@st.cache_data
+def load_dataset():
+    return pd.read_csv("data/dataset_final.csv")
+
+df_produk = load_dataset()
+
+
+# ==================================================
+# TF-IDF
+# ==================================================
+
+@st.cache_resource
+def build_similarity(df):
+
+    vectorizer = TfidfVectorizer()
+
+    tfidf_matrix = vectorizer.fit_transform(
+        df["text"].fillna("")
+    )
+
+    return vectorizer, tfidf_matrix
+
+
+vectorizer, tfidf_matrix = build_similarity(df_produk)
 
 # ==================================================
 # NAMA TOPIK
@@ -382,4 +413,97 @@ Probabilitas :
 
         st.info(
             keyword_text
+        )
+
+        # ==================================================
+        # PRODUK BERDASARKAN TOPIK
+        # ==================================================
+
+        st.subheader("🛍 Produk Relevan Berdasarkan Topik")
+
+        produk_topik = df_produk[
+            df_produk["topik"] == topic_id
+        ].copy()
+
+        jenis = ambil("JENIS_PRODUK")
+        kandungan = ambil("KANDUNGAN")
+        manfaat = ambil("MANFAAT")
+
+        if jenis != "-":
+            produk_topik = produk_topik[
+                produk_topik["jenis_produk"]
+                .str.contains(jenis, case=False, na=False)
+            ]
+
+        if kandungan != "-":
+            produk_topik = produk_topik[
+                produk_topik["kandungan"]
+                .str.contains(kandungan, case=False, na=False)
+            ]
+
+        if manfaat != "-":
+            produk_topik = produk_topik[
+                produk_topik["manfaat"]
+                .str.contains(manfaat, case=False, na=False)
+            ]
+
+        produk_topik = produk_topik.drop_duplicates(subset="text")
+
+        if len(produk_topik) > 0:
+
+            st.dataframe(
+                produk_topik[
+                    [
+                        "text",
+                        "merek",
+                        "jenis_produk"
+                    ]
+                ].head(10),
+                use_container_width=True,
+                hide_index=True
+            )
+
+        else:
+
+            st.info("Tidak ada produk pada topik ini.")
+
+        # ==================================================
+        # PRODUK PALING MIRIP
+        # ==================================================
+
+        st.subheader("🔍 Produk yang Mirip dengan Query")
+
+        query_vec = vectorizer.transform([query])
+
+        similarity = cosine_similarity(
+            query_vec,
+            tfidf_matrix
+        ).flatten()
+
+        df_similarity = df_produk.copy()
+
+        df_similarity["similarity"] = similarity
+
+        hasil = (
+            df_similarity
+            .sort_values(
+                by="similarity",
+                ascending=False
+            )
+        )
+
+        st.dataframe(
+
+            hasil[
+                [
+                    "text",
+                    "merek",
+                    "jenis_produk",
+                    "similarity"
+                ]
+            ]
+            .head(10),
+
+            use_container_width=True,
+            hide_index=True
         )
