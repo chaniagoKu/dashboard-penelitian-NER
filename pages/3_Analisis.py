@@ -215,7 +215,13 @@ if st.button("🔍 Analisis"):
 
             text = str(text).strip()
 
-            # hapus kata hubung di awal entitas
+            # hapus token subword
+            text = text.replace("##", "")
+
+            # ganti simbol menjadi spasi
+            text = re.sub(r"[&/+|]", " ", text)
+
+            # hapus kata hubung di AWAL entitas
             text = re.sub(
                 r'^(dan|atau|dengan|dgn|dngan|utk|untk|buat|untuk|serta|hingga|sampai)\s+',
                 '',
@@ -223,12 +229,31 @@ if st.button("🔍 Analisis"):
                 flags=re.IGNORECASE
             )
 
-            return text.strip()
+            # hapus kata hubung di AKHIR entitas
+            text = re.sub(
+                r'\s+(dan|atau|dengan|dgn|dngan|utk|untk|buat|untuk|serta|hingga|sampai)$',
+                '',
+                text,
+                flags=re.IGNORECASE
+            )
+
+            # hapus simbol di awal/akhir
+            text = re.sub(r'^[^\w]+|[^\w]+$', '', text)
+
+            # rapikan spasi
+            text = " ".join(text.split())
+
+            return text
 
         # bersihkan entitas
         pred_df["Entitas"] = pred_df["Entitas"].apply(clean_entity_result)
 
-        # hapus jika setelah dibersihkan hanya kata hubung
+        # hapus entitas kosong
+        pred_df = pred_df[
+            pred_df["Entitas"].str.strip() != ""
+        ]
+
+        # hapus jika hanya stopword
         pred_df = pred_df[
             ~pred_df["Entitas"]
                 .str.lower()
