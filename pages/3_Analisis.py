@@ -473,64 +473,106 @@ Probabilitas :
             )
 
             # ==================================================
-            # KOMPONEN LISTING YANG DIREKOMENDASIKAN
+            # POLA LISTING YANG DIREKOMENDASIKAN
             # ==================================================
 
-            st.subheader("💡 Komponen Listing yang Direkomendasikan")
+            from collections import Counter
 
-            jenis = ambil("JENIS_PRODUK")
-            kandungan = ambil("KANDUNGAN")
-            manfaat = ambil("MANFAAT")
-            merek = ambil("MEREK")
+            st.subheader("💡 Pola Listing yang Direkomendasikan")
 
-            komponen = []
 
-            if merek != "-":
-                komponen.append(("🏷 Merek", merek))
+            # ------------------------------------------
+            # Membentuk pola setiap produk Top-10
+            # ------------------------------------------
 
-            if jenis != "-":
-                komponen.append(("🧴 Jenis Produk", jenis))
+            top10 = produk_topik.head(10).copy()
 
-            if kandungan != "-":
-                komponen.append(("🧪 Kandungan", kandungan))
 
-            if manfaat != "-":
-                komponen.append(("✨ Manfaat", manfaat))
+            def get_pattern(row):
 
-            for judul, isi in komponen:
-                st.markdown(f"**{judul}**")
-                st.success(isi)
+                pattern = []
+
+                if pd.notna(row["merek"]) and str(row["merek"]).strip() != "":
+                    pattern.append("MEREK")
+
+                if pd.notna(row["jenis_produk"]) and str(row["jenis_produk"]).strip() != "":
+                    pattern.append("JENIS_PRODUK")
+
+                if pd.notna(row["kandungan"]) and str(row["kandungan"]).strip() != "":
+                    pattern.append("KANDUNGAN")
+
+                if pd.notna(row["manfaat"]) and str(row["manfaat"]).strip() != "":
+                    pattern.append("MANFAAT")
+
+                return " + ".join(pattern)
+
+
+            top10["pattern"] = top10.apply(get_pattern, axis=1)
+
+
+            # ------------------------------------------
+            # Hitung pola yang paling sering muncul
+            # ------------------------------------------
+
+            counter = Counter(top10["pattern"])
+
+            best_pattern, freq = counter.most_common(1)[0]
+
+            persentase = round(freq / len(top10) * 100, 1)
+
+
+            st.success(best_pattern.replace(" + ", " → "))
+
+
+            st.info(
+            f"""
+            Pola ini digunakan oleh
+
+            {freq} dari {len(top10)} produk paling mirip
+
+            ({persentase}%)
+            """
+            )
+
+            st.subheader("📊 Distribusi Pola Listing")
+
+            pattern_df = (
+                top10["pattern"]
+                .value_counts()
+                .reset_index()
+            )
+
+            pattern_df.columns = [
+                "Pola Listing",
+                "Jumlah Produk"
+            ]
+
+            st.dataframe(
+                pattern_df,
+                hide_index=True,
+                use_container_width=True
+            )
 
             st.subheader("📝 Contoh Penyusunan Listing")
 
-            listing = []
+            contoh = []
 
-            if merek != "-":
-                listing.append(merek)
+            produk = top10.iloc[0]
 
-            if jenis != "-":
-                listing.append(jenis)
 
-            if kandungan != "-":
-                listing.append(kandungan)
+            if "MEREK" in best_pattern:
+                contoh.append(str(produk["merek"]))
 
-            if manfaat != "-":
-                listing.append(manfaat)
+            if "JENIS_PRODUK" in best_pattern:
+                contoh.append(str(produk["jenis_produk"]))
 
-            hasil_listing = " ".join(listing)
+            if "KANDUNGAN" in best_pattern:
+                contoh.append(str(produk["kandungan"]))
 
-            st.info(hasil_listing)
+            if "MANFAAT" in best_pattern:
+                contoh.append(str(produk["manfaat"]))
 
-            st.caption(
-            """
-            Contoh penyusunan listing disusun berdasarkan:
 
-            • hasil ekstraksi entitas menggunakan model IndoBERT;
+            contoh_listing = " ".join(contoh)
 
-            • topik dominan hasil pemodelan LDA;
-
-            • karakteristik produk-produk serupa pada topik tersebut.
-
-            Dashboard ini tidak menentukan listing terbaik, tetapi memberikan dasar informasi yang dapat digunakan pengguna dalam menyusun nama produk secara lebih konsisten.
-            """
-            )
+            st.success(contoh_listing)
